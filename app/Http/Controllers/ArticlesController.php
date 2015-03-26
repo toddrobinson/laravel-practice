@@ -37,16 +37,19 @@ class ArticlesController extends Controller {
 
 	public function create()
 	{
-		return view('articles.create');
+		$tags = \App\Tag::lists('name', 'id');
+		return view('articles.create', compact('tags'));
 	}
 
 	public function store(Requests\ArticleRequest $request)
 	{
-		$article = new Article($request->all());
-		Auth::user()->articles()->save($article);
-		//validation is happening, typehinted parameters
-		//\Session::flash('flash_message', 'Your article has been created!');
-		//session()->flash('flash_message', 'Your article has been created!');
+
+		$article = Auth::user()->articles()->create($request->all());
+
+		$tagIds = $request->input('tag_list');
+
+		$article->tags()->attach($tagIds);
+
 		flash()->overlay('Your article has been created', 'Good job!');
 		return redirect('articles');
 
@@ -55,13 +58,20 @@ class ArticlesController extends Controller {
 	public function edit(Article $article)
 	{
 		//$article = Article::findOrFail($id);
-		return view('articles.edit', compact('article'));
+		$tags = \App\Tag::lists('name', 'id');
+		return view('articles.edit', compact('article', 'tags'));
 	}
 
 	public function update(Article $article, Requests\ArticleRequest $request)
 	{
 		//$article = Article::findOrFail($id);
+
 		$article->update($request->all());
+
+		$tagIds = $request->input('tag_list');
+
+		$article->tags()->sync($tagIds);
+
 		return redirect('articles');
 	}
 
